@@ -1,0 +1,22 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker (if you use volumes or temp files)
+docker-compose.override.yml
+*.env
+
+# Temporary files
+*.swp
+*.tmp
+*.bak

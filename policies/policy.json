@@ -1,0 +1,33 @@
+{
+    "vpcs": [
+      {
+        "name": "ifym",
+        "cidr": "10.0.0.0/16",
+        "subnets": [
+          {
+            "name": "ifym-public",
+            "cidr": "10.0.1.0/24",
+            "public": true,
+            "ingress": [
+              {"port": 80, "protocol": "tcp", "action": "allow"},
+              {"port": 22, "protocol": "tcp", "action": "deny"},
+              {"protocol": "icmp", "action": "allow"}
+            ]
+          },
+          {
+            "name": "ifym-private",
+            "cidr": "10.0.2.0/24",
+            "public": false,
+            "ingress": [
+              {"port": 22, "protocol": "tcp", "action": "allow"},
+              {"protocol": "icmp", "action": "allow"}
+            ]
+          }
+        ],
+        "firewall_rules": [
+          {"protocol": "icmp", "action": "allow"}
+        ]
+      }
+    ]
+  }
+  

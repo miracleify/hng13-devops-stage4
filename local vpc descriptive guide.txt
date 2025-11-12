@@ -1,0 +1,71 @@
+############################################
+# 0. START CONTAINER & ENTER PROJECT FOLDER
+############################################
+docker start -ai vpc-lab
+cd /hng13-stage-4
+
+############################################
+# 1. CLEAN START — REMOVE ANY OLD NETWORKS
+############################################
+ip netns del ifym_public 2>/dev/null
+ip netns del ifym_private 2>/dev/null
+ip link del vethh1 2>/dev/null
+ip link del vethn1 2>/dev/null
+ip link del vpc-ifym 2>/dev/null
+
+############################################
+# 2. CREATE VPC + SUBNETS FROM POLICY FILE
+############################################
+python3 vpcctl.py create --config policies/policy.json
+
+############################################
+# 3. SHOW VPC & SUBNETS CREATED
+############################################
+python3 vpcctl.py show --config policies/policy.json
+
+############################################
+# 4. TEST CONNECTIVITY — PUBLIC/PRIVATE -> GATEWAY
+############################################
+ip netns exec ifym_public ping -c 2 10.0.0.1
+ip netns exec ifym_private ping -c 2 10.0.0.1
+
+############################################
+# 5. TEST ISOLATION — SUBNETS SHOULD NOT COMMUNICATE
+############################################
+# expected FAIL
+ip netns exec ifym_private ping -c 2 10.0.1.2  
+ip netns exec ifym_public ping -c 2 10.0.2.2    
+
+############################################
+# 6. TEST NAT BEHAVIOR
+############################################
+# Public subnet outgoing (expected SUCCESS)
+ip netns exec ifym_public curl -I https://example.com
+
+# Private subnet outgoing (expected FAIL)
+ip netns exec ifym_private curl -I https://example.com
+
+############################################
+# 7. DEPLOY SIMPLE APP IN PUBLIC SUBNET
+############################################
+ip netns exec ifym_public python3 -m http.server 8080 &
+
+############################################
+# 8. TEST APP FROM PRIVATE SUBNET (expected FAIL)
+############################################
+ip netns exec ifym_private curl http://10.0.1.2:8080
+
+############################################
+# 9. TEST APP FROM PUBLIC SUBNET (expected SUCCESS)
+############################################
+ip netns exec ifym_public curl http://10.0.1.2:8080
+
+############################################
+# 10. SHOW LOGS OF OPERATIONS
+############################################
+cat /var/log/vpcctl.log
+
+############################################
+# 11. CLEAN TEARDOWN — DELETE EVERYTHING
+############################################
+python3 vpcctl.py delete --config policies/policy.json
